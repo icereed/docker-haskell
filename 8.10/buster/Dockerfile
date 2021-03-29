@@ -20,25 +20,33 @@ RUN export GNUPGHOME="$(mktemp -d)" && \
     echo 'deb http://downloads.haskell.org/debian buster main' > /etc/apt/sources.list.d/ghc.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        cabal-install-${CABAL_INSTALL} \
-        curl \
-        g++ \
-        ghc-${GHC} \
-        git \
-        libsqlite3-dev \
-        libtinfo-dev \
-        make \
-        netbase \
-        openssh-client \
-        xz-utils \
-        zlib1g-dev && \
+    cabal-install-${CABAL_INSTALL} \
+    curl \
+    g++ \
+    ghc-${GHC} \
+    git \
+    libsqlite3-dev \
+    libtinfo-dev \
+    make \
+    netbase \
+    openssh-client \
+    xz-utils \
+    zlib1g-dev && \
     rm -rf "$GNUPGHOME" /var/lib/apt/lists/*
 
-RUN export GNUPGHOME="$(mktemp -d)" && \
+RUN case "$(uname -m)" in \
+    x86_64|amd64) \
+    LONG_ARCH="x86_64" \
+    ;; \
+    aarch64|arm64) \
+    LONG_ARCH="aarch64" \
+    ;; \
+    esac && \
+    export GNUPGHOME="$(mktemp -d)" && \
     gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys ${STACK_KEY} && \
     gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys ${STACK_RELEASE_KEY} && \
-    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v${STACK}/stack-${STACK}-linux-x86_64.tar.gz -o stack.tar.gz && \
-    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v${STACK}/stack-${STACK}-linux-x86_64.tar.gz.asc -o stack.tar.gz.asc && \
+    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v${STACK}/stack-${STACK}-linux-${LONG_ARCH}.tar.gz -o stack.tar.gz && \
+    curl -fSL https://github.com/commercialhaskell/stack/releases/download/v${STACK}/stack-${STACK}-linux-${LONG_ARCH}.tar.gz.asc -o stack.tar.gz.asc && \
     gpg --batch --trusted-key 0x575159689BEFB442 --verify stack.tar.gz.asc stack.tar.gz && \
     tar -xf stack.tar.gz -C /usr/local/bin --strip-components=1 && \
     /usr/local/bin/stack config set system-ghc --global true && \
